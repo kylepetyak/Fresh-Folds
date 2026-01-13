@@ -27,6 +27,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Demo mode: Skip Stripe if not configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      // Return a demo session ID that will be handled by verify-checkout
+      return NextResponse.json({
+        sessionId: 'demo_session',
+        demoMode: true,
+        metadata: {
+          user_id: user.id,
+          plan_type: planType,
+          frequency,
+          bag_count: bagCount?.toString() || BAG_COUNTS[planType as keyof typeof BAG_COUNTS].toString(),
+          pickup_day_1: pickupDay1,
+          pickup_day_2: pickupDay2 || '',
+          pickup_window_start: pickupWindowStart,
+          pickup_window_end: pickupWindowEnd,
+        }
+      })
+    }
+
     // Get or create Stripe customer
     const { data: userData } = await supabase
       .from('users')

@@ -122,19 +122,31 @@ function OnboardingContent() {
         }),
       })
 
-      const { sessionId, error } = await response.json()
+      const responseData = await response.json()
 
-      if (error) {
-        console.error('Checkout error:', error)
-        setErrors({ general: error })
+      if (responseData.error) {
+        console.error('Checkout error:', responseData.error)
+        setErrors({ general: responseData.error })
         setIsLoading(false)
+        return
+      }
+
+      // Demo mode: redirect directly to success page
+      if (responseData.demoMode) {
+        const params = new URLSearchParams({
+          session_id: 'demo_session',
+          pickup_day: data.pickupDay1,
+          window_start: data.pickupWindowStart,
+          window_end: data.pickupWindowEnd,
+        })
+        router.push(`/onboarding/success?${params.toString()}`)
         return
       }
 
       // Redirect to Stripe Checkout
       const stripe = await getStripe()
       if (stripe) {
-        await stripe.redirectToCheckout({ sessionId })
+        await stripe.redirectToCheckout({ sessionId: responseData.sessionId })
       }
     } catch (error) {
       console.error('Checkout error:', error)
