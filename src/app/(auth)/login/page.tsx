@@ -4,7 +4,6 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
-import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
   const router = useRouter()
@@ -50,30 +49,9 @@ function LoginForm() {
 
     setIsLoading(true)
 
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      })
-
-      if (error) {
-        if (error.message === 'Invalid login credentials') {
-          setGeneralError('Invalid email or password')
-        } else {
-          setGeneralError(error.message)
-        }
-        return
-      }
-
-      router.push(redirect)
-      router.refresh()
-    } catch {
-      setGeneralError('Something went wrong. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
+    // Demo mode: simulate login and redirect to dashboard
+    await new Promise(resolve => setTimeout(resolve, 800))
+    router.push(redirect)
   }
 
   return (

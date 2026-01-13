@@ -1,46 +1,45 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
+import { DAYS_OF_WEEK } from '@/lib/constants'
 
 function SuccessContent() {
   const searchParams = useSearchParams()
-  const sessionId = searchParams.get('session_id')
-  const [isVerifying, setIsVerifying] = useState(true)
-  const [subscriptionDetails, setSubscriptionDetails] = useState<{
-    pickupDay: string
-    pickupWindow: string
-    firstPickupDate: string
-  } | null>(null)
+  const pickupDay = searchParams.get('pickup_day') || 'monday'
+  const windowStart = searchParams.get('window_start') || '08:00'
+  const windowEnd = searchParams.get('window_end') || '10:00'
 
-  useEffect(() => {
-    if (sessionId) {
-      // Verify the session and get subscription details
-      fetch(`/api/verify-checkout?session_id=${sessionId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setSubscriptionDetails(data.subscription)
-          }
-        })
-        .finally(() => setIsVerifying(false))
-    } else {
-      setIsVerifying(false)
-    }
-  }, [sessionId])
-
-  if (isVerifying) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Confirming your subscription...</p>
-        </div>
-      </div>
-    )
+  const formatTime = (time: string) => {
+    const [hours] = time.split(':')
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+    return `${displayHour}:00 ${ampm}`
   }
+
+  const getNextPickupDate = () => {
+    const dayIndex = DAYS_OF_WEEK.findIndex(d => d.value === pickupDay)
+    const today = new Date()
+    const currentDay = today.getDay()
+    const targetDay = dayIndex === -1 ? 1 : dayIndex + 1 // +1 because Sunday is 0
+
+    let daysUntil = targetDay - currentDay
+    if (daysUntil <= 0) daysUntil += 7
+
+    const nextDate = new Date(today)
+    nextDate.setDate(today.getDate() + daysUntil)
+
+    return nextDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  const dayLabel = DAYS_OF_WEEK.find(d => d.value === pickupDay)?.label || pickupDay
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,22 +90,20 @@ function SuccessContent() {
               </ul>
             </div>
 
-            {subscriptionDetails && (
-              <div className="text-left space-y-2 py-4 border-t border-b border-gray-200">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pickup Day</span>
-                  <span className="font-medium capitalize">{subscriptionDetails.pickupDay}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Pickup Window</span>
-                  <span className="font-medium">{subscriptionDetails.pickupWindow}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">First Pickup</span>
-                  <span className="font-medium">{subscriptionDetails.firstPickupDate}</span>
-                </div>
+            <div className="text-left space-y-2 py-4 border-t border-b border-gray-200">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Pickup Day</span>
+                <span className="font-medium capitalize">{dayLabel}</span>
               </div>
-            )}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Pickup Window</span>
+                <span className="font-medium">{formatTime(windowStart)} - {formatTime(windowEnd)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">First Pickup</span>
+                <span className="font-medium">{getNextPickupDate()}</span>
+              </div>
+            </div>
 
             <Link href="/dashboard">
               <Button className="w-full" size="lg">

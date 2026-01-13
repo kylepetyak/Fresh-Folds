@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Select } from '@/components/ui'
 
 export default function SupportPage() {
   const [formData, setFormData] = useState({
@@ -34,26 +34,10 @@ export default function SupportPage() {
     setIsSubmitting(true)
     setError('')
 
-    try {
-      const response = await fetch('/api/customer/support', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Failed to submit ticket')
-        return
-      }
-
-      setIsSubmitted(true)
-    } catch {
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
+    // Demo mode: simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsSubmitted(true)
+    setIsSubmitting(false)
   }
 
   if (isSubmitted) {

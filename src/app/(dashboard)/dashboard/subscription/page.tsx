@@ -1,42 +1,23 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button } from '@/components/ui'
 import { HOUSEHOLD_SIZES, FREQUENCIES, DAYS_OF_WEEK } from '@/lib/constants'
 
-interface Subscription {
-  id: string
-  status: string
-  plan_type: string
-  frequency: string
-  bag_count: number
-  pickup_day_1: string
-  pickup_day_2: string | null
-  pickup_window_start: string
-  pickup_window_end: string
+// Demo subscription data
+const demoSubscription = {
+  id: 'demo-sub-1',
+  status: 'active',
+  plan_type: 'medium',
+  frequency: 'weekly',
+  bag_count: 4,
+  pickup_day_1: 'monday',
+  pickup_day_2: null as string | null,
+  pickup_window_start: '08:00',
+  pickup_window_end: '10:00',
 }
 
-export default async function SubscriptionPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  const { data: subscriptionData } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
-  const subscription = subscriptionData as unknown as Subscription | null
-
-  if (!subscription) {
-    redirect('/onboarding')
-  }
+export default function SubscriptionPage() {
+  const subscription = demoSubscription
 
   const planName = HOUSEHOLD_SIZES.find(s => s.value === subscription.plan_type)?.label || subscription.plan_type
   const frequencyName = FREQUENCIES.find(f => f.value === subscription.frequency)?.label || subscription.frequency
@@ -108,30 +89,24 @@ export default async function SubscriptionPage() {
           <CardContent className="space-y-4">
             {subscription.status === 'active' && (
               <>
-                <Link href="/dashboard/subscription/pause">
-                  <Button variant="outline" className="w-full justify-between">
-                    <span>Pause Subscription</span>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Button>
-                </Link>
-                <Link href="/dashboard/subscription/cancel">
-                  <Button variant="ghost" className="w-full justify-between text-red-600 hover:bg-red-50">
-                    <span>Cancel Subscription</span>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Button>
-                </Link>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>Pause Subscription</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
+                <Button variant="ghost" className="w-full justify-between text-red-600 hover:bg-red-50">
+                  <span>Cancel Subscription</span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
               </>
             )}
             {subscription.status === 'paused' && (
-              <Link href="/dashboard/subscription/resume">
-                <Button className="w-full">
-                  Resume Subscription
-                </Button>
-              </Link>
+              <Button className="w-full">
+                Resume Subscription
+              </Button>
             )}
           </CardContent>
         </Card>
@@ -145,11 +120,9 @@ export default async function SubscriptionPage() {
             <p className="text-gray-600 mb-4">
               Manage your payment method and view billing history through our secure payment portal.
             </p>
-            <Link href="/api/create-portal-session" target="_blank">
-              <Button variant="outline">
-                Manage Billing
-              </Button>
-            </Link>
+            <Button variant="outline">
+              Manage Billing
+            </Button>
           </CardContent>
         </Card>
       </div>
