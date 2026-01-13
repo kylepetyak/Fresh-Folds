@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fresh Folds
+
+A subscription-based laundry service marketplace connecting busy households with local laundry providers in the Phoenix metro area.
+
+## Overview
+
+Fresh Folds makes laundry day effortless. Customers subscribe to a plan, set out their laundry bags on scheduled pickup days, and receive freshly washed and folded clothes within 48 hours. Local providers handle the washing, creating flexible income opportunities in their communities.
+
+## Features
+
+### Customer App
+- **Zip Code Validation** - Check service availability in Phoenix metro
+- **Subscription Plans** - Choose from Small (1-2 people), Medium (3-4 people), or Large (5+ people) household sizes
+- **Flexible Scheduling** - Weekly, bi-weekly, or twice-weekly pickup options
+- **Dashboard** - View upcoming pickups, manage subscription, update account
+- **Skip Pickups** - Skip any pickup with 24-hour notice
+
+### Tech Stack
+- **Frontend**: Next.js 16, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Payments**: Stripe Subscriptions (optional for demo)
+- **Deployment**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Stripe account (optional)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Environment Variables
+
+Create a `.env.local` file:
+
+```env
+# Supabase (required)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Stripe (optional - app works in demo mode without these)
+STRIPE_SECRET_KEY=your_stripe_secret_key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_WEBHOOK_SECRET=your_webhook_secret
+
+# App URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run development server
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-To learn more about Next.js, take a look at the following resources:
+### Database Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run the SQL schema in your Supabase project:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# The schema is located at:
+supabase/schema.sql
+```
 
-## Deploy on Vercel
+## Demo Mode
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The app works without Stripe configuration for demonstration purposes:
+- Onboarding flow skips payment and redirects to success
+- All other features work normally
+- Perfect for showing concepts to clients
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── (auth)/            # Auth pages (login, signup, etc.)
+│   ├── (dashboard)/       # Protected dashboard pages
+│   └── api/               # API routes
+├── components/            # React components
+│   ├── ui/               # Reusable UI components
+│   ├── layout/           # Layout components
+│   └── dashboard/        # Dashboard-specific components
+├── lib/                   # Utilities and configurations
+│   ├── supabase/         # Supabase client setup
+│   ├── stripe/           # Stripe client setup
+│   └── constants.ts      # App constants
+└── types/                # TypeScript type definitions
+```
+
+## Deployment
+
+Deploy to Vercel:
+
+1. Push to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy
+
+## License
+
+Private - All rights reserved
