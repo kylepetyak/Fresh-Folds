@@ -4,9 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button, Input, Select, Card, CardContent } from '@/components/ui'
-import { createClient } from '@/lib/supabase/client'
 import { HOUSEHOLD_SIZES, FREQUENCIES, DAYS_OF_WEEK, PICKUP_WINDOWS } from '@/lib/constants'
-import { getStripe } from '@/lib/stripe/client'
 
 type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
@@ -85,79 +83,18 @@ function OnboardingContent() {
 
     setIsLoading(true)
 
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      // Update user profile with address and phone via API
-      await fetch('/api/customer/account', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: user.user_metadata?.name || '',
-          phone: data.phone,
-          address_street: data.addressStreet,
-          address_city: data.addressCity,
-          address_zip: data.addressZip,
-        }),
-      })
-
-      // Create Stripe checkout session
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planType: data.planType,
-          frequency: data.frequency,
-          bagCount: data.bagCount,
-          pickupDay1: data.pickupDay1,
-          pickupDay2: data.pickupDay2,
-          pickupWindowStart: data.pickupWindowStart,
-          pickupWindowEnd: data.pickupWindowEnd,
-        }),
-      })
-
-      const responseData = await response.json()
-
-      if (responseData.error) {
-        console.error('Checkout error:', responseData.error)
-        setErrors({ general: responseData.error })
-        setIsLoading(false)
-        return
-      }
-
-      // Demo mode: redirect directly to success page
-      if (responseData.demoMode) {
-        const params = new URLSearchParams({
-          session_id: 'demo_session',
-          pickup_day: data.pickupDay1,
-          window_start: data.pickupWindowStart,
-          window_end: data.pickupWindowEnd,
-        })
-        router.push(`/onboarding/success?${params.toString()}`)
-        return
-      }
-
-      // Redirect to Stripe Checkout
-      const stripe = await getStripe()
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId: responseData.sessionId })
-      }
-    } catch (error) {
-      console.error('Checkout error:', error)
-      setErrors({ general: 'Something went wrong. Please try again.' })
-    } finally {
-      setIsLoading(false)
-    }
+    // Demo mode: redirect directly to success page
+    const params = new URLSearchParams({
+      session_id: 'demo_session',
+      pickup_day: data.pickupDay1,
+      window_start: data.pickupWindowStart,
+      window_end: data.pickupWindowEnd,
+    })
+    router.push(`/onboarding/success?${params.toString()}`)
   }
 
   const getPlanPrice = () => {
-    // Placeholder prices - will be configured in Stripe
+    // Placeholder prices
     const prices = {
       small: { biweekly: 49, weekly: 79, twice_weekly: 139 },
       medium: { biweekly: 69, weekly: 109, twice_weekly: 189 },
@@ -468,7 +405,6 @@ function OnboardingContent() {
 
       case 6:
       case 7:
-        // These will be handled by Stripe Checkout and the success page
         return (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>

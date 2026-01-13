@@ -1,72 +1,44 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
 import { PICKUP_STATUS_LABELS } from '@/lib/constants'
 
-interface UserProfile {
-  name: string | null
+// Demo data for showcase
+const demoProfile = {
+  name: 'Sarah Johnson'
 }
 
-interface Subscription {
-  id: string
-  plan_type: string
-  frequency: string
-  bag_count: number
-  pickup_day_1: string
-  pickup_day_2: string | null
+const demoSubscription = {
+  id: 'demo-sub-1',
+  plan_type: 'medium',
+  frequency: 'weekly',
+  bag_count: 4,
+  pickup_day_1: 'monday',
+  pickup_day_2: null
 }
 
-interface Pickup {
-  id: string
-  scheduled_date: string
-  scheduled_window_start: string
-  scheduled_window_end: string
-  status: string
+// Calculate next Monday for demo
+const getNextMonday = () => {
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 7 : 8 - dayOfWeek
+  const nextMonday = new Date(today)
+  nextMonday.setDate(today.getDate() + daysUntilMonday)
+  return nextMonday.toISOString().split('T')[0]
 }
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+const demoNextPickup = {
+  id: 'demo-pickup-1',
+  scheduled_date: getNextMonday(),
+  scheduled_window_start: '08:00',
+  scheduled_window_end: '10:00',
+  status: 'scheduled'
+}
 
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Fetch user profile
-  const { data: profileData } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-  const profile = profileData as unknown as UserProfile | null
-
-  // Fetch subscription
-  const { data: subscriptionData } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .single()
-  const subscription = subscriptionData as unknown as Subscription | null
-
-  // If no active subscription, redirect to onboarding
-  if (!subscription) {
-    redirect('/onboarding')
-  }
-
-  // Fetch next upcoming pickup
-  const { data: nextPickupData } = await supabase
-    .from('pickups')
-    .select('*')
-    .eq('subscription_id', subscription.id)
-    .gte('scheduled_date', new Date().toISOString().split('T')[0])
-    .neq('status', 'skipped')
-    .order('scheduled_date', { ascending: true })
-    .limit(1)
-    .single()
-  const nextPickup = nextPickupData as unknown as Pickup | null
+export default function DashboardPage() {
+  const profile = demoProfile
+  const subscription = demoSubscription
+  const nextPickup = demoNextPickup
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -130,17 +102,15 @@ export default async function DashboardPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Link href={`/dashboard/pickups/${nextPickup.id}`} className="flex-1">
+                  <Link href="/dashboard/pickups" className="flex-1">
                     <Button variant="outline" className="w-full">
                       View Details
                     </Button>
                   </Link>
                   {nextPickup.status === 'scheduled' && (
-                    <Link href={`/dashboard/pickups/${nextPickup.id}/skip`} className="flex-1">
-                      <Button variant="ghost" className="w-full text-gray-600">
-                        Skip Pickup
-                      </Button>
-                    </Link>
+                    <Button variant="ghost" className="flex-1 text-gray-600">
+                      Skip Pickup
+                    </Button>
                   )}
                 </div>
               </div>

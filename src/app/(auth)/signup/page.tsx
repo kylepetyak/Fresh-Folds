@@ -4,7 +4,6 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
-import { createClient } from '@/lib/supabase/client'
 
 function SignUpForm() {
   const router = useRouter()
@@ -60,48 +59,14 @@ function SignUpForm() {
 
     setIsLoading(true)
 
-    try {
-      const supabase = createClient()
+    // Demo mode: simulate signup and redirect to onboarding
+    await new Promise(resolve => setTimeout(resolve, 800))
 
-      // Sign up with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-          },
-        },
-      })
-
-      if (authError) {
-        setGeneralError(authError.message)
-        return
-      }
-
-      if (authData.user) {
-        // Create user profile via API route
-        await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: authData.user.id,
-            email: formData.email,
-            name: formData.name,
-          }),
-        })
-
-        // Redirect to onboarding with zip code if provided
-        const redirectUrl = zipCode
-          ? `/onboarding?zip=${zipCode}`
-          : '/onboarding'
-        router.push(redirectUrl)
-      }
-    } catch {
-      setGeneralError('Something went wrong. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
+    // Redirect to onboarding with zip code if provided
+    const redirectUrl = zipCode
+      ? `/onboarding?zip=${zipCode}`
+      : '/onboarding'
+    router.push(redirectUrl)
   }
 
   return (

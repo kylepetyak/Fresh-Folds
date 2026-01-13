@@ -1,51 +1,65 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { Card, CardContent, Button } from '@/components/ui'
 import { PICKUP_STATUS_LABELS } from '@/lib/constants'
 
-interface Subscription {
-  id: string
+// Demo data
+const getNextMonday = (weeksAhead: number = 0) => {
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 7 : 8 - dayOfWeek
+  const nextMonday = new Date(today)
+  nextMonday.setDate(today.getDate() + daysUntilMonday + (weeksAhead * 7))
+  return nextMonday.toISOString().split('T')[0]
 }
 
-interface Pickup {
-  id: string
-  scheduled_date: string
-  scheduled_window_start: string
-  scheduled_window_end: string
-  status: string
+const getPastMonday = (weeksBack: number) => {
+  const today = new Date()
+  const pastDate = new Date(today)
+  pastDate.setDate(today.getDate() - (weeksBack * 7))
+  return pastDate.toISOString().split('T')[0]
 }
 
-export default async function PickupsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+const demoPickups = [
+  {
+    id: 'demo-1',
+    scheduled_date: getNextMonday(0),
+    scheduled_window_start: '08:00',
+    scheduled_window_end: '10:00',
+    status: 'scheduled'
+  },
+  {
+    id: 'demo-2',
+    scheduled_date: getNextMonday(1),
+    scheduled_window_start: '08:00',
+    scheduled_window_end: '10:00',
+    status: 'scheduled'
+  },
+  {
+    id: 'demo-3',
+    scheduled_date: getPastMonday(1),
+    scheduled_window_start: '08:00',
+    scheduled_window_end: '10:00',
+    status: 'delivered'
+  },
+  {
+    id: 'demo-4',
+    scheduled_date: getPastMonday(2),
+    scheduled_window_start: '08:00',
+    scheduled_window_end: '10:00',
+    status: 'delivered'
+  },
+  {
+    id: 'demo-5',
+    scheduled_date: getPastMonday(3),
+    scheduled_window_start: '08:00',
+    scheduled_window_end: '10:00',
+    status: 'skipped'
+  },
+]
 
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Fetch subscription
-  const { data: subscriptionData } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .single()
-  const subscription = subscriptionData as unknown as Subscription | null
-
-  if (!subscription) {
-    redirect('/onboarding')
-  }
-
-  // Fetch all pickups (upcoming and past)
-  const { data: pickupsData } = await supabase
-    .from('pickups')
-    .select('*')
-    .eq('subscription_id', subscription.id)
-    .order('scheduled_date', { ascending: false })
-    .limit(20)
-  const pickups = (pickupsData || []) as unknown as Pickup[]
+export default function PickupsPage() {
+  const pickups = demoPickups
 
   const today = new Date().toISOString().split('T')[0]
   const upcomingPickups = pickups.filter(p => p.scheduled_date >= today && p.status !== 'delivered')
@@ -82,14 +96,6 @@ export default async function PickupsPage() {
     }
   }
 
-  const canSkip = (pickup: { scheduled_date: string; status: string }) => {
-    if (pickup.status !== 'scheduled') return false
-    const pickupDate = new Date(pickup.scheduled_date)
-    const now = new Date()
-    const hoursUntilPickup = (pickupDate.getTime() - now.getTime()) / (1000 * 60 * 60)
-    return hoursUntilPickup >= 24
-  }
-
   return (
     <DashboardLayout title="Pickups">
       <div className="space-y-8">
@@ -114,12 +120,10 @@ export default async function PickupsPage() {
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(pickup.status)}`}>
                           {PICKUP_STATUS_LABELS[pickup.status as keyof typeof PICKUP_STATUS_LABELS]}
                         </span>
-                        {canSkip(pickup) && (
-                          <Link href={`/dashboard/pickups/${pickup.id}/skip`}>
-                            <Button variant="ghost" size="sm">
-                              Skip
-                            </Button>
-                          </Link>
+                        {pickup.status === 'scheduled' && (
+                          <Button variant="ghost" size="sm">
+                            Skip
+                          </Button>
                         )}
                       </div>
                     </div>
